@@ -1,0 +1,95 @@
+//@version=6
+
+strategy("CCI + Dual DMI Strategy", overlay=true, margin_long=100, margin_short=100)
+
+
+
+// Inputs
+
+cciLength = input(20, "CCI Length")
+
+dmiLength1 = input(20, "First DMI Length")
+
+dmiLength2 = input(40, "Second DMI Length")
+
+overboughtLevel = input(+100, "CCI Overbought Level")
+
+oversoldLevel = input(-100, "CCI Oversold Level")
+
+
+
+// Calculate Indicators
+
+cci = ta.cci(close, cciLength)
+
+[diPlus1, diMinus1, _] = ta.dmi(dmiLength1, dmiLength1)  // First DMI (20)
+
+[diPlus2, diMinus2, _] = ta.dmi(dmiLength2, dmiLength2)  // Second DMI (40)
+
+
+
+// Entry Conditions (Buy)
+
+cciBullish = ta.crossover(cci, overboughtLevel) 
+
+dmiBullish1 = ta.crossover(diPlus1, diMinus1)  // Fast DMI cross
+
+dmiBullish2 = (diPlus2 > diMinus2)            // Slow DMI trend confirmation
+
+enterLong = cciBullish and dmiBullish1 and dmiBullish2
+
+
+
+// Exit Conditions (Sell)
+
+cciBearish = ta.crossunder(cci, overboughtLevel)
+
+dmiBearish1 = ta.crossunder(diPlus1, diMinus1)  // Fast DMI cross
+
+dmiBearish2 = (diPlus2 < diMinus2)             // Slow DMI trend confirmation
+
+exitLong = cciBearish and dmiBearish1 and dmiBearish2
+
+
+
+// Strategy Execution
+
+if (enterLong)
+
+    strategy.entry("Buy", strategy.long)
+
+    
+
+if (exitLong)
+
+    strategy.close("Buy")
+
+
+
+// Plotting
+
+plot(cci, "CCI", color=color.blue)
+
+hline(overboughtLevel, "Overbought", color=color.red)
+
+hline(oversoldLevel, "Oversold", color=color.green)
+
+
+
+// Plot both DMI lines
+
+plot(diPlus1, "+DI (20)", color=color.green)
+
+plot(diMinus1, "-DI (20)", color=color.red)
+
+plot(diPlus2, "+DI (40)", color=color.lime, linewidth=2)
+
+plot(diMinus2, "-DI (40)", color=color.maroon, linewidth=2)
+
+
+
+// Buy/Sell Signals
+
+plotshape(enterLong, "Buy", shape.triangleup, location.belowbar, color=color.green, size=size.small)
+
+plotshape(exitLong, "Sell", shape.triangledown, location.abovebar, color=color.red, size=size.small)
